@@ -10,7 +10,7 @@ endif()
 
 project(Partia C CXX)
 include("${VITASDK}/share/vita.cmake" REQUIRED)
-set(VITA_APP_NAME "Partia")
+set(VITA_APP_NAME "Partia: The Granian Trilogy")
 set(VITA_TITLEID  "PARTIAVGL")
 set(VITA_MKSFOEX_FLAGS "-d ATTRIBUTE2=12")
 
@@ -73,18 +73,72 @@ target_link_libraries(Partia
   SceKernelDmacmgr_stub
 )
 
-vita_create_self(eboot.bin Partia UNSAFE)
+add_executable(companion
+  selector/main.c
+  loader/dialog.c
+)
+
+target_link_libraries(companion
+  -Wl,--whole-archive pthread -Wl,--no-whole-archive
+  SDL2_mixer
+  SDL2_image
+  SDL2
+  png
+  webp
+  jpeg
+  mikmod
+  z
+  m
+  stdc++
+  opensles
+  sndfile
+  vorbis
+  vorbisenc
+  vorbisfile
+  ogg
+  FLAC
+  openal
+  imgui
+  vitaGL
+  vitashark
+  SceShaccCgExt
+  mathneon
+  mpg123
+  taihen_stub
+  kubridge_stub
+  SceAppMgr_stub
+  SceAppUtil_stub
+  SceAudio_stub
+  SceAudioIn_stub
+  SceCtrl_stub
+  SceCommonDialog_stub
+  SceDisplay_stub
+  SceFios2_stub
+  SceGxm_stub
+  SceLibcBridge_stub
+  SceShaccCg_stub
+  SceSysmodule_stub
+  ScePower_stub
+  SceTouch_stub
+  SceMotion_stub
+  SceHid_stub
+  SceVshBridge_stub
+  SceKernelDmacmgr_stub
+)
+
+vita_create_self(eboot.bin companion UNSAFE)
+
+vita_create_self(game.bin Partia UNSAFE)
 vita_create_vpk(Partia.vpk ${VITA_TITLEID} eboot.bin
   VERSION ${VITA_VERSION}
   NAME ${VITA_APP_NAME}
   FILE ${CMAKE_SOURCE_DIR}/sce_sys/icon0.png sce_sys/icon0.png
        ${CMAKE_SOURCE_DIR}/sce_sys/pic0.png sce_sys/pic0.png
-       ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/bg.png sce_sys/livearea/contents/bg.png
-       ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/startup.png sce_sys/livearea/contents/startup.png
+       ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/bg0.png sce_sys/livearea/contents/bg0.png
+       ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/conquest.png sce_sys/livearea/contents/conquest.png
        ${CMAKE_SOURCE_DIR}/sce_sys/livearea/contents/template.xml sce_sys/livearea/contents/template.xml
-)
-
-add_custom_target(copy
-  COMMAND cp eboot.bin D:/app/${VITA_TITLEID}/eboot.bin
-  DEPENDS eboot.bin
+	   ${CMAKE_SOURCE_DIR}/images/game1.png images/game1.png
+	   ${CMAKE_SOURCE_DIR}/images/game2.png images/game2.png
+	   ${CMAKE_SOURCE_DIR}/images/game3.png images/game3.png
+	   ${CMAKE_BINARY_DIR}/game.bin game.bin
 )

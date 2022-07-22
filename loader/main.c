@@ -49,6 +49,8 @@
 #define dlog
 #endif
 
+char DATA_PATH[256];
+
 extern const char *BIONIC_ctype_;
 extern const short *BIONIC_tolower_tab_;
 extern const short *BIONIC_toupper_tab_;
@@ -1401,28 +1403,39 @@ int main(int argc, char *argv[]) {
 	scePowerSetGpuXbarClockFrequency(166);
 
 	if (check_kubridge() < 0)
-		fatal_error("Error kubridge.skprx is not installed.");
+		fatal_error("Error: kubridge.skprx is not installed.");
 
 	if (!file_exists("ur0:/data/libshacccg.suprx") && !file_exists("ur0:/data/external/libshacccg.suprx"))
-		fatal_error("Error libshacccg.suprx is not installed.");
+		fatal_error("Error: libshacccg.suprx is not installed.");
+	
+	// Generating selected game path
+	char fname[256];
+	int8_t game_idx;
+	FILE *f = fopen("ux0:data/partia.tmp", "rb");
+	fread(&game_idx, 1, 1, f);
+	fclose(f);
+	sceIoRemove("ux0:data/partia.tmp");
+	sprintf(DATA_PATH, "ux0:data/partia/partia%d", game_idx);
 	
 	printf("Loading libc++_shared\n"); // This is optional
-	if (so_file_load(&stdcpp_mod, DATA_PATH "/libc++_shared.so", LOAD_ADDRESS) >= 0) {
+	sprintf(fname, "%s/libc++_shared.so", DATA_PATH);
+	if (so_file_load(&stdcpp_mod, fname, LOAD_ADDRESS) >= 0) {
 		so_relocate(&stdcpp_mod);
 		so_resolve(&stdcpp_mod, default_dynlib, sizeof(default_dynlib), 0);
 	}
 	
 	printf("Loading libmain\n");
-	if (so_file_load(&partia_mod, DATA_PATH "/libmain.so", LOAD_ADDRESS + 0x1000000) < 0)
-		fatal_error("Error could not load %s.", DATA_PATH "/libmain.so");
+	sprintf(fname, "%s/libmain.so", DATA_PATH);
+	if (so_file_load(&partia_mod, fname, LOAD_ADDRESS + 0x1000000) < 0)
+		fatal_error("Error could not load %s.", fname);
 	so_relocate(&partia_mod);
 	so_resolve(&partia_mod, default_dynlib, sizeof(default_dynlib), 0);
-
-	vglInitExtended(0, SCREEN_W, SCREEN_H, MEMORY_VITAGL_THRESHOLD_MB * 1024 * 1024, SCE_GXM_MULTISAMPLE_4X);
 	
 	patch_game();
 	so_flush_caches(&partia_mod);
 	so_initialize(&partia_mod);
+	
+	vglInitExtended(0, SCREEN_W, SCREEN_H, MEMORY_VITAGL_THRESHOLD_MB * 1024 * 1024, SCE_GXM_MULTISAMPLE_NONE);
 	
 	memset(fake_vm, 'A', sizeof(fake_vm));
 	*(uintptr_t *)(fake_vm + 0x00) = (uintptr_t)fake_vm; // just point to itself...

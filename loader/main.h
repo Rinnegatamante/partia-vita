@@ -5,8 +5,6 @@
 #include "config.h"
 #include "so_util.h"
 
-extern so_module fahrenheit_mod;
-
 int debugPrintf(char *text, ...);
 
 int ret0();
