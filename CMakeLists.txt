@@ -10,6 +10,8 @@ endif()
 
 project(Partia C CXX)
 include("${VITASDK}/share/vita.cmake" REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(PARTIA_DEPS REQUIRED SDL2_mixer SDL2_image sndfile vorbisfile openal)
 set(VITA_APP_NAME "Partia: The Granian Trilogy")
 set(VITA_TITLEID  "PARTIAVGL")
 set(VITA_MKSFOEX_FLAGS "-d ATTRIBUTE2=12")
@@ -25,8 +27,13 @@ add_executable(Partia
   loader/ctype_patch.c
 )
 
+set_target_properties(Partia PROPERTIES LINKER_LANGUAGE CXX)
+target_compile_options(Partia PRIVATE ${PARTIA_DEPS_STATIC_CFLAGS})
+
 target_link_libraries(Partia
-  -Wl,--whole-archive pthread -Wl,--no-whole-archive
+  -pthread
+  -Wl,--start-group
+  ${PARTIA_DEPS_STATIC_LDFLAGS}
   SDL2_mixer
   SDL2_image
   SDL2
@@ -37,7 +44,7 @@ target_link_libraries(Partia
   z
   m
   stdc++
-  opensles
+  OpenSLES
   sndfile
   vorbis
   vorbisenc
@@ -62,7 +69,6 @@ target_link_libraries(Partia
   SceDisplay_stub
   SceFios2_stub
   SceGxm_stub
-  SceLibcBridge_stub
   SceShaccCg_stub
   SceSysmodule_stub
   ScePower_stub
@@ -70,7 +76,8 @@ target_link_libraries(Partia
   SceMotion_stub
   SceHid_stub
   SceVshBridge_stub
-  SceKernelDmacmgr_stub
+  SceKernelDmacMgr_stub
+  -Wl,--end-group
 )
 
 add_executable(companion
@@ -78,8 +85,16 @@ add_executable(companion
   loader/dialog.c
 )
 
+set_target_properties(companion PROPERTIES LINKER_LANGUAGE CXX)
+target_compile_options(companion PRIVATE ${PARTIA_DEPS_STATIC_CFLAGS})
+
+# Reserve space for vita-elf-create import metadata between load segments.
+set_property(TARGET companion APPEND_STRING PROPERTY LINK_FLAGS " -Wl,--defsym=__sce_headroom=0x10000")
+
 target_link_libraries(companion
-  -Wl,--whole-archive pthread -Wl,--no-whole-archive
+  -pthread
+  -Wl,--start-group
+  ${PARTIA_DEPS_STATIC_LDFLAGS}
   SDL2_mixer
   SDL2_image
   SDL2
@@ -90,7 +105,7 @@ target_link_libraries(companion
   z
   m
   stdc++
-  opensles
+  OpenSLES
   sndfile
   vorbis
   vorbisenc
@@ -115,7 +130,6 @@ target_link_libraries(companion
   SceDisplay_stub
   SceFios2_stub
   SceGxm_stub
-  SceLibcBridge_stub
   SceShaccCg_stub
   SceSysmodule_stub
   ScePower_stub
@@ -123,7 +137,8 @@ target_link_libraries(companion
   SceMotion_stub
   SceHid_stub
   SceVshBridge_stub
-  SceKernelDmacmgr_stub
+  SceKernelDmacMgr_stub
+  -Wl,--end-group
 )
 
 vita_create_self(eboot.bin companion UNSAFE)
@@ -142,3 +157,6 @@ vita_create_vpk(Partia.vpk ${VITA_TITLEID} eboot.bin
 	   ${CMAKE_SOURCE_DIR}/images/game3.png images/game3.png
 	   ${CMAKE_BINARY_DIR}/game.bin game.bin
 )
+
+# Keep legacy invalid returns diagnostic-only instead of inventing results.
+set_property(SOURCE loader/so_util.c APPEND PROPERTY COMPILE_OPTIONS -Wno-error=return-mismatch -Wno-error=incompatible-pointer-types)
