@@ -382,15 +382,15 @@ void PlayMusic(void *unk, const char *name, float unk2) {
 }
 
 void init() {
-	int (*init_SDL)() = so_symbol(&partia_mod, "_Z8init_SDLv");
+	int (*init_SDL)(void) = (int (*)(void))so_symbol(&partia_mod, "_Z8init_SDLv");
 	init_SDL();
 }
 
 void patch_game(void) {
-	hook_addr(so_symbol(&partia_mod, "_ZN6SSound10LoadEffectEPKcj"), LoadEffect);
-	hook_addr(so_symbol(&partia_mod, "_ZN6Partia9playSoundEP11_partiabrew7ESounds"), PlaySound);
-	hook_addr(so_symbol(&partia_mod, "_ZN6Partia9playMusicEP11_partiabrewPKcb"), PlayMusic);
-	hook_addr(so_symbol(&partia_mod, "_Z4initv"), init);
+	hook_addr(so_symbol(&partia_mod, "_ZN6SSound10LoadEffectEPKcj"), (uintptr_t)LoadEffect);
+	hook_addr(so_symbol(&partia_mod, "_ZN6Partia9playSoundEP11_partiabrew7ESounds"), (uintptr_t)PlaySound);
+	hook_addr(so_symbol(&partia_mod, "_ZN6Partia9playMusicEP11_partiabrewPKcb"), (uintptr_t)PlayMusic);
+	hook_addr(so_symbol(&partia_mod, "_Z4initv"), (uintptr_t)init);
 }
 
 extern void *__aeabi_atexit;
